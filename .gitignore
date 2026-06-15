@@ -1,0 +1,16 @@
+# Local storage backend mirror (used when no GITHUB_TOKEN is set)
+_local_data/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Secrets
+.env
+.streamlit/secrets.toml
+
+# OS
+.DS_Store

@@ -1,0 +1,5 @@
+streamlit==1.32.0
+numpy>=1.24
+scipy>=1.10
+networkx>=3.0
+PyGithub>=2.1
