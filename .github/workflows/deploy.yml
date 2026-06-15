@@ -14,4 +14,4 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git push --force "https://woahH4R1:$HF_TOKEN@huggingface.co/spaces/woahH4R1/braindump-system" HEAD:main
+          git push --force "https://hariiyer:$HF_TOKEN@huggingface.co/spaces/hariiyer/braindump-system" HEAD:main
