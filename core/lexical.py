@@ -3,10 +3,18 @@
 For a term ``t`` in dump ``d`` drawn from a corpus of ``N`` dumps::
 
     TF(t, d)    = count(t in d) / total_terms(d)
-    IDF(t)      = log(N / df(t))          df(t) = #dumps containing t
+    IDF(t)      = log((1 + N) / (1 + df(t))) + 1     df(t) = #dumps with t
     TFIDF(t, d) = TF(t, d) * IDF(t)
 
-A *global* IDF table is persisted across all dumps (``lexical/_global_idf.json``)
+We use **smoothed** IDF (the ``+1`` smoothing borrowed from scikit-learn)
+rather than the raw ``log(N / df)``. Raw IDF is exactly 0 whenever a term
+appears in every dump — and on your *first* dump every term appears in every
+(i.e. the one) dump, so every score collapses to 0 and ranking is impossible.
+Smoothing keeps IDF strictly positive: with a single dump it degenerates to a
+constant, so TF-IDF cleanly falls back to ranking by term frequency, and as
+the corpus grows, common terms are still down-weighted relative to rare ones.
+
+A *global* IDF table is persisted across all dumps (``_system/global_idf.json``)
 so a brand-new dump is scored against the entire corpus, not just itself.
 The per-dump output is the top-20 keywords by TF-IDF, stored as JSON.
 """
@@ -56,12 +64,15 @@ def update_global_idf(storage: Storage, dump_id: str, tokens: list[str]) -> dict
 
 
 def idf_for(table: dict, term: str) -> float:
-    """IDF(t) = log(N / df(t)); 0 when the term is in every dump."""
-    n = max(table.get("N", 0), 1)
+    """Smoothed IDF: log((1 + N) / (1 + df(t))) + 1.
+
+    Always strictly positive, so scores never collapse to zero (the bug with
+    raw ``log(N/df)`` on a single dump). With an empty/one-dump corpus this is
+    a constant, making TF-IDF degrade gracefully to term-frequency ranking.
+    """
+    n = table.get("N", 0)
     df = table.get("df", {}).get(term, 0)
-    if df <= 0:
-        return math.log(n)  # unseen term -> maximally specific
-    return math.log(n / df)
+    return math.log((1 + n) / (1 + df)) + 1.0
 
 
 def compute_tfidf(tokens: list[str], idf_table: dict) -> dict[str, float]:

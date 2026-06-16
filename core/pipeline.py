@@ -16,13 +16,23 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from core import graph, lexical, raw, semantic
-from core.ingest import ingest, slugify
+from core.ingest import PreprocessOptions, ingest, slugify
 from core.storage import Storage, meta_path
 
 
-def process_dump(storage: Storage, text: str, dump_type: str = "brain dump") -> dict:
-    """Ingest one input and run every layer. Returns a summary dict."""
-    parsed = ingest(text, dump_type)
+def process_dump(
+    storage: Storage,
+    text: str,
+    dump_type: str = "brain dump",
+    opts: PreprocessOptions | None = None,
+) -> dict:
+    """Ingest one input and run every layer. Returns a summary dict.
+
+    ``opts`` carries the user's chosen preprocessing (stop-word / filler
+    removal, min length, conversation handling) so the corpus is built from
+    the same cleaned tokens the user previewed in the UI.
+    """
+    parsed = ingest(text, dump_type, opts)
 
     # Folder id = timestamp + concept slug, e.g.
     # 2026-06-15_19-07-25__attention-transformers-tokens — sortable by time,
